@@ -143,7 +143,6 @@ def get_online_streamers(usernames, token) -> Dict[str, dict]:
             for item in resp.json().get("data", []):
                 user = item["user_login"].lower()
                 online[user] = item
-        logger.info(f"API kontrolü tamamlandı: {len(online)} online streamer")
         return online
     except Exception as e:
         logger.error(f"Online streamer kontrolü hatası: {e}")
@@ -181,7 +180,7 @@ async def start_watching(user: str):
 
         context = await browser.new_context(
             user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            viewport={"width": 1920, "height": 1080},
+            viewport={"width": 400, "height": 300},
             ignore_https_errors=True
         )
         
@@ -291,7 +290,21 @@ async def start_watching(user: str):
                 pass
         
         await asyncio.sleep(2)
-        
+        # "İzlemeye Başla" butonuna otomatik tıkla
+                # "İzlemeye Başla" butonuna otomatik tıkla
+        try:
+            await page.wait_for_selector('div[data-a-target="tw-core-button-label-text"]', timeout=5000)
+            buttons = await page.query_selector_all('div[data-a-target="tw-core-button-label-text"]')
+            for b in buttons:
+                text = (await b.inner_text()).strip().lower()
+                if "izlemeye başla" in text:
+                    await b.click()
+                    logger.info(f"{user} yayını için 'İzlemeye Başla' butonuna otomatik basıldı")
+                    break
+        except Exception as e:
+            logger.warning(f"{user} yayını için 'İzlemeye Başla' butonu bulunamadı veya tıklanamadı: {e}")
+
+	
         # Sayfayı minimum kaynak kullanacak şekilde ayarla
         try:
             await page.evaluate("""
